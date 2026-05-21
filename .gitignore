@@ -58,3 +58,4 @@ Thumbs.db
 notebooks/lightning_logs
 
 .venv
+.vscode
