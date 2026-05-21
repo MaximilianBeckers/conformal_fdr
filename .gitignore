@@ -51,7 +51,6 @@ Thumbs.db
 # other stuff
 *.lock
 *.pth
-*.csv
 *.ipynb
 *.pt
 *.ckpt
@@ -59,7 +58,3 @@ Thumbs.db
 notebooks/lightning_logs
 
 .venv
-
-# everything in data except gitkeep
-data/*
-!data/.gitkeep
