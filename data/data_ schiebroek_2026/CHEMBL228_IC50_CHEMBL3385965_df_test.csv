@@ -1,0 +1,17 @@
+smiles,pchembl_value
+c1ccc(N(Cc2ccc3ccccc3c2)CC2CNC2)cc1,8.08
+Fc1ccc(CN(CC2CNC2)c2ccccc2)cc1,7.75
+c1ccc2cc(CN(C3CCCCC3)C3CNC3)ccc2c1,8.21
+Clc1ccccc1CN(CC1CNC1)c1ccccc1,8.28
+Fc1ccccc1N(Cc1ccc(Cl)cc1)C1CNC1,7.17
+Clc1ccc(CN(CC2CNC2)c2ccccc2)cc1,7.84
+Clc1cccc(CN(CC2CNC2)c2ccccc2)c1Cl,7.96
+Clc1ccc(CN(CC2CNC2)C2CCCC2)cc1Cl,7.54
+Clc1ccc(CN(C2CC2)C2CNC2)cc1Cl,6.94
+Cc1cccc(CN(CC2CNC2)c2ccccc2)c1,7.94
+c1ccc(N(Cc2ccc3ccccc3c2)C2CNC2)cc1,7.92
+c1ccc(CN(Cc2ccc3ccccc3c2)C2CNC2)cc1,7.7
+Clc1cccc(N(Cc2ccc3ccccc3c2)C2CNC2)c1,7.0
+CC(C)N(Cc1ccc(Cl)c(Cl)c1)CC1CNC1,8.12
+Clc1ccc(CN(C2CCCCC2)C2CNC2)cc1,7.38
+Cc1ccc(N(Cc2ccc3ccccc3c2)C2CNC2)cc1,7.64

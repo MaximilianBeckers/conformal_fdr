@@ -1,0 +1,12 @@
+smiles,pchembl_value
+Oc1ccc2c(c1)OC(CNCc1ccccc1)CC2,6.73
+Oc1ccc2c(c1)OC(CNCCN1CCN(c3ccc(I)cc3)CC1)CC2,7.02
+Oc1ccc2c(c1)OC(CNCc1cccc(I)c1)CC2,7.54
+Oc1ccc2c(c1)OC(CNCc1ccc(OCCCCF)cc1)CC2,7.04
+CCCN1CCOC2c3cc(O)ccc3CCC21,7.77
+Oc1ccc2c(c1)OC(CNCc1ccc(I)cc1)CC2,7.09
+Oc1ccc2c(c1)OC(CNCc1ccccc1I)CC2,7.08
+Oc1ccc2c(c1)OC(CNCc1ccccc1OCCCCF)CC2,6.45
+Oc1ccc2c(c1)OC(CNCCN1CCN(c3ccc(OCCF)cc3)CC1)CC2,6.63
+CCCCCCNCC1CCc2ccc(O)cc2O1,6.59
+CCCN1CCc2cccc3c2C1Cc1ccc(O)c(O)c1-3,8.31

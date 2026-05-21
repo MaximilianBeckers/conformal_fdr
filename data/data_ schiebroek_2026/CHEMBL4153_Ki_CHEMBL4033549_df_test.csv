@@ -1,0 +1,6 @@
+smiles,pchembl_value
+CCCN1CCC=C(c2cc(-c3ccc(C)cc3)no2)C1,8.37
+CCOC(=O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,8.87
+CC(C)OC(=O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,8.15
+CCCOC(=O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,7.92
+O=C(O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,6.35

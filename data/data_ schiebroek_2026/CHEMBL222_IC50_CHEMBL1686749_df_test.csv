@@ -1,0 +1,16 @@
+smiles,pchembl_value
+CC(N)C1(c2ccc(Cl)c(Cl)c2)CCCCC1,6.77
+CNC(C)C1(c2ccc(Cl)c(Cl)c2)CCCCC1,7.43
+CC(N(C)C)C1(c2ccc(Cl)c(Cl)c2)CCCCC1,8.15
+CNCC1(c2ccc(Cl)c(Cl)c2)CCCCC1,7.07
+CC(N)C1(c2ccc(OC(F)(F)F)cc2)CCCCC1,5.5
+CC(N)C1(c2ccc3ccccc3c2)CCCCC1,6.48
+CC(N)C1(c2ccc(OC(C)(C)C)cc2)CCCCC1,5.3
+CNC(C)C1(c2ccc3ccccc3c2)CCCCC1,7.64
+CCC(N)C1(c2ccc(Cl)c(Cl)c2)CCCCC1,6.92
+CC(N(C)C)C1(c2ccc3ccccc3c2)CCCCC1,7.68
+CNC(CC(C)C)C1(c2ccc(Cl)c(Cl)c2)CCCCC1,6.02
+CC(N)C1(c2cccc3ccccc23)CCCCC1,5.4
+CC(C)CC(N)C1(c2ccc(Cl)c(Cl)c2)CCCCC1,6.05
+CC(N)C1(c2ccc(-c3ccccc3)cc2)CCCCC1,5.4
+CNCC1(c2ccc3ccccc3c2)CCCCC1,6.53

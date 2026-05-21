@@ -1,0 +1,9 @@
+smiles,pchembl_value
+NCC1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([9.])
+CN(C)C1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([8.5200])
+NCCC1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([9.])
+CNC1CCc2ccccc2C1c1ccc(Cl)c(Cl)c1,tensor([7.3800])
+CNCC1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([8.0500])
+CN(C)CC1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([6.5100])
+CNC1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([8.2200])
+NC1Cc2ccccc2C(c2ccc(Cl)c(Cl)c2)C1,tensor([7.3400])

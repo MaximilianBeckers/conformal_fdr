@@ -1,0 +1,17 @@
+smiles,pchembl_value
+Clc1ccc(C2CC=CCNC2)cc1Cl,6.66
+OCCN1CC=CCC(c2ccc(Cl)c(Cl)c2)C1,6.82
+Clc1ccc(C2CCCCNC2)cc1Cl,6.85
+COCCN1CC=CCC(c2ccc(Cl)c(Cl)c2)C1,6.27
+OCCC1(c2ccc(Cl)c(Cl)c2)CCCCNC1,7.51
+Fc1ccc(C2CC=CCNC2)cc1Cl,5.82
+Cc1ccc(C2CC=CCNC2)cc1Cl,6.22
+C1=CCC(c2cc3ccccc3o2)CNC1,6.62
+C1=CCC(c2ccc3ccccc3c2)CNC1,7.2
+Cc1cc(C2CC=CCN(C)C2)ccc1Cl,6.57
+OCCC1(c2cc3ccccc3o2)CCCNC1,6.64
+CN1Cc2c(N)cccc2C(c2ccccc2)C1,6.1
+CN1CC=CCC(c2cc3ccccc3o2)C1,6.1
+CN1CC=CCC(c2ccc(Cl)c(Cl)c2)C1,7.08
+OCCC1(c2ccc(Cl)c(Cl)c2)CCCNC1,7.38
+CN1CCCCC(c2ccc(Cl)c(Cl)c2)C1,6.58

@@ -1,0 +1,17 @@
+smiles,pchembl_value
+CCCNc1nc(C#Cc2ccc(Cl)s2)nc2[nH]cnc12,7.79
+Clc1ccc(C#Cc2nc(NC3CCCC3)c3nc[nH]c3n2)s1,7.76
+CC12CC1C(n1cnc3c(NCCc4ccccc4)nc(C#Cc4ccccc4)nc31)C(O)C2O,7.7
+Clc1ccc(C#Cc2nc(NC3CC4CCC3C4)c3nc[nH]c3n2)s1,7.69
+Cn1cnc2c(NCCc3ccccc3)nc(C#Cc3ccc(Cl)s3)nc21,6.94
+Fc1ccc(C#Cc2nc(NCc3cccc(Cl)c3)c3nc[nH]c3n2)cc1F,6.92
+Clc1ccc(C#Cc2nc(NCCc3ccccc3)c3nc[nH]c3n2)s1,7.89
+CC#Cc1nc(NC(C2CC2)C2CC2)c2nc[nH]c2n1,7.37
+OC1CCCC1Nc1nc(C#Cc2ccc(Cl)s2)nc2[nH]cnc12,7.93
+OCC1OC(n2cnc3c(NCCc4ccccc4)ncnc32)C(O)C1O,8.68
+COc1cc(CCNc2nc(C#Cc3ccc(Cl)s3)nc3[nH]cnc23)ccc1O,5.17
+CCNc1nc(C#Cc2ccc(Cl)s2)nc2[nH]cnc12,7.48
+Clc1cccc(CNc2nc(C#Cc3ccc(Cl)s3)nc3[nH]cnc23)c1,6.89
+Clc1ccc(C#Cc2nc(NC3CCOC3)c3nc[nH]c3n2)s1,7.5
+CNc1nc(C#Cc2ccc(Cl)s2)nc2[nH]cnc12,7.1
+Clc1ccc(C#Cc2nc(NC(C3CC3)C3CC3)c3nc[nH]c3n2)s1,7.43

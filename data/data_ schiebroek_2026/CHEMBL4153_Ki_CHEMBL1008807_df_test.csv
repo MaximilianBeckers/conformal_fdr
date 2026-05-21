@@ -1,0 +1,17 @@
+smiles,pchembl_value
+CC(=O)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,7.25
+O=C(CCc1ccccc1)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,6.63
+C=CC(=O)OC(Cc1ccccc1)CN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1,7.34
+CCCC(=O)OC(Cc1ccccc1)CN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1,6.54
+Fc1ccc(C(OCCN2CCN(CCCc3ccccc3)CC2)c2ccc(F)cc2)cc1,7.29
+CC1CN(CCCn2c3ccccc3c3ccccc32)CC(C)N1,6.05
+CC(=O)OC(Cc1ccccc1)CN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1,7.12
+CCC(=O)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,7.12
+OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,7.35
+CCC(=O)OC(Cc1ccccc1)CN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1,7.09
+C=CC(=O)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,7.06
+O=C(Cc1ccccc1)OC(Cc1ccccc1)CN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1,7.06
+CC(C)C(=O)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,7.05
+OC(Cc1ccccc1)CN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1,7.55
+O=C(Cc1ccccc1)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,6.87
+O=C(CCCc1ccccc1)OC(CCN1CCN(CCCN(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccccc1,6.61

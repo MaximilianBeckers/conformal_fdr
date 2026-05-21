@@ -1,0 +1,13 @@
+smiles,pchembl_value
+CC(=O)OC1CC(CO)C2(C)CC(=O)C3COC(c4ccoc4)CC3(C)C2C1=O,tensor([6.])
+CCC(=O)NC1CC(C(=O)OC)C2(C)CCC3C(=O)OC(c4ccoc4)CC3(C)C2C1=O,tensor([6.9300])
+CCN(C(C)=O)C1CC(C(=O)OC)C2(C)CCC3C(=O)OC(c4ccoc4)CC3(C)C2C1=O,tensor([7.5600])
+COC(=O)C1CC(N)C(=O)C2C1(C)CCC1C(=O)OC(c3ccoc3)CC12C,tensor([6.6500])
+COC(=O)C1CC(N(C)C(C)=O)C(=O)C2C1(C)CCC1C(=O)OC(c3ccoc3)CC12C,tensor([8.4900])
+CCC(=O)N(C)C1CC(C(=O)OC)C2(C)CCC3C(=O)OC(c4ccoc4)CC3(C)C2C1=O,tensor([8.8000])
+COCC1CC(OC(C)=O)C(=O)C2C1(C)CC(=O)C1COC(c3ccoc3)CC12C,tensor([6.1100])
+CNC1CC(C(=O)OC)C2(C)CCC3C(=O)OC(c4ccoc4)CC3(C)C2C1=O,tensor([6.4800])
+CNC(=O)C1CC(OC(C)=O)C(=O)C2C1(C)CCC1C(=O)OC(c3ccoc3)CC12C,tensor([5.8600])
+COC(=O)C1CC(NC(C)=O)C(=O)C2C1(C)CCC1C(=O)OC(c3ccoc3)CC12C,tensor([6.8300])
+COC(=O)C1CC(NC(C)C)C(=O)C2C1(C)CCC1C(=O)OC(c3ccoc3)CC12C,tensor([8.6400])
+CCC(=O)N(CC)C1CC(C(=O)OC)C2(C)CCC3C(=O)OC(c4ccoc4)CC3(C)C2C1=O,tensor([7.4200])

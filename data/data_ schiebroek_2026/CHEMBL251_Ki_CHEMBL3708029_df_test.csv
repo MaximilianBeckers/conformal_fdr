@@ -1,0 +1,16 @@
+smiles,pchembl_value
+COc1ccc(Cl)cc1CNc1nc(Cl)nc2c1ncn2C1SCC(O)C1O,7.9
+OC1COC(n2cnc3c(NCc4cccc(I)c4)nc(Cl)nc32)C1O,7.37
+OC1COC(n2cnc3c(NCc4cccc(Br)c4)nc(Cl)nc32)C1O,7.89
+OC1CSC(n2cnc3c(NCc4cccc(Br)c4)ncnc32)C1O,8.17
+OC1CSC(n2cnc3c(NCc4cccc(I)c4)nc(Cl)nc32)C1O,8.38
+OC1CSC(n2cnc3c(NCc4cccc(F)c4)ncnc32)C1O,8.14
+OC1CSC(n2cnc3c(NCc4cccc(I)c4)ncnc32)C1O,8.6
+OC1CSC(n2cnc3c(NCc4cccc(Br)c4)nc(Cl)nc32)C1O,8.05
+CNc1nc(Cl)nc2c1ncn2C1SCC(O)C1O,8.43
+OC1CSC(n2cnc3c(NCc4cccc(F)c4)nc(Cl)nc32)C1O,8.13
+COc1ccccc1CNc1nc(Cl)nc2c1ncn2C1SCC(O)C1O,7.7
+OC1CSC(n2cnc3c(NCc4cccc5ccccc45)nc(Cl)nc32)C1O,7.61
+OC1CSC(n2cnc3c(NCc4cccc(Cl)c4)nc(Cl)nc32)C1O,8.78
+OC1CSC(n2cnc3c(NCc4cccc(Cl)c4)ncnc32)C1O,8.82
+OC1CSC(n2cnc3c(NCc4ccccc4Cl)nc(Cl)nc32)C1O,7.59

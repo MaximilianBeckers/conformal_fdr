@@ -1,0 +1,12 @@
+smiles,pchembl_value
+CNC(=O)C12CC1C(n1cnc3c(NOC)nc(Cl)nc31)C(O)C2O,6.58
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(C#CCCCC(=O)NCCN)c4)nc(Cl)nc31)C(O)C2O,6.57
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(Cl)c4)nc(C#CCCCC(=O)OC)nc31)C(O)C2O,6.32
+CNC(=O)C12CC1C(n1cnc3c(NCc4cc(OC)ccc4OC)nc(I)nc31)C(O)C2O,5.51
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(C#CCCCC(=O)O)c4)nc(Cl)nc31)C(O)C2O,6.5
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(Cl)c4)nc(C#C[Si](C)(C)C)nc31)C(O)C2O,6.8
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(Cl)c4)nc(C#CCCCC(=O)NCCN)nc31)C(O)C2O,6.34
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(Cl)c4)nc(C#CCCCC(=O)O)nc31)C(O)C2O,4.83
+C#Cc1nc(NCc2cccc(Cl)c2)c2ncn(C3C(O)C(O)C4(C(=O)NC)CC34)c2n1,6.76
+CNC(=O)C12CC1C(n1cnc3c(NCc4cccc(C#CCCCC(=O)NCCNC(C)=O)c4)nc(Cl)nc31)C(O)C2O,6.74
+CCCC#Cc1nc(NCc2cccc(Cl)c2)c2ncn(C3C(O)C(O)C4(C(=O)NC)CC34)c2n1,5.98

@@ -1,0 +1,14 @@
+smiles,pchembl_value
+Cc1c(F)cc(C(=O)NO)cc1F,7.57
+Nc1ccc(C(=O)NO)cc1F,6.74
+O=C(NO)c1cccc(F)c1,6.34
+Nc1c(F)cc(C(=O)NO)cc1F,6.95
+CC(=O)Nc1ccc(C(=O)NO)cc1F,7.24
+O=C(NO)c1cc(F)c(Cn2nnnc2-c2cccs2)c(F)c1,7.72
+Cc1ccc(C(=O)NO)cn1,7.16
+Nc1ncc(C(=O)NO)cn1,7.19
+Cc1ccc(C(=O)NO)cc1,6.85
+O=C(NO)c1cccnc1,6.17
+Cc1ccc(C(=O)NO)cc1F,7.31
+CCN(CC)Cc1ccc2cc(COC(=O)Nc3c(F)cc(C(=O)NO)cc3F)ccc2c1,8.0
+Nc1ccc(C(=O)NO)cn1,6.62

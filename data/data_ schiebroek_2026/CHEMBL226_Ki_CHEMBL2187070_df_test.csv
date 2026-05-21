@@ -1,0 +1,10 @@
+smiles,pchembl_value
+CCCN1C(=O)N2CCN=C2c2[nH]c(-c3ccc(Br)cc3)nc21,5.75
+O=C(Cc1ccccc1)Nc1nc2ccc(Cl)cc2c2nc(-c3ccco3)nn12,6.64
+CNc1nc(C#N)nc2c1ncn2C1OC(CO)C(O)C1O,7.16
+Cc1ccc(-c2nc(NC(=O)Nc3ccc(F)cc3)c3nnn(Cc4ccccc4F)c3n2)cc1,6.37
+OCC1OC(n2cnc3c(NC4CC4c4cccc(C(F)(F)F)c4)ncnc32)C(O)C1O,6.98
+CCC1CN2C(=O)N(C)c3nc(-c4ccccc4)[nH]c3C2=N1,5.79
+CNC(=O)C1(n2cnc3c(NCc4cccc(I)c4)nc(Cl)nc32)SCC(O)C1O,6.96
+OCC1OC(n2cnc3c(NCc4cccc(I)c4)nc(Cl)nc32)C(O)C1F,5.33
+OCC1OC(n2cnc3c(NCC4c5ccccc5-c5ccccc54)ncnc32)C(O)C1O,7.85

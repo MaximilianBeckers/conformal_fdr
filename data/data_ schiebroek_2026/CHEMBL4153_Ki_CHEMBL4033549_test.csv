@@ -1,0 +1,6 @@
+smiles,pchembl_value
+CCCN1CCC=C(c2cc(-c3ccc(C)cc3)no2)C1,tensor([8.3700])
+CCOC(=O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,tensor([8.8700])
+CC(C)OC(=O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,tensor([8.1500])
+CCCOC(=O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,tensor([7.9200])
+O=C(O)C1(c2ccccc2)CC1CN1CCC(O)(c2ccc(Cl)cc2)CC1,tensor([6.3500])

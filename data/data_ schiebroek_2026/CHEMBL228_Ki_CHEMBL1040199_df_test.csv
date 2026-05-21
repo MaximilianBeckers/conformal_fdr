@@ -1,0 +1,17 @@
+smiles,pchembl_value
+O=C1Cc2c(ccc3c2OCC(CNCC2CCc4c([nH]c5ccc(F)cc45)C2)O3)N1,7.6
+O=C1Cc2c(ccc3c2OCC(CNCCC2CCc4c([nH]c5ccc(F)cc45)C2)O3)N1,5.28
+O=c1[nH]c2cccc(CN3CCN(CC4CCc5[nH]c6ccc(F)cc6c5C4)CC3)c2o1,7.39
+O=c1[nH]c2cccc(N3CCN(CC4CCc5[nH]c6ccc(F)cc6c5C4)CC3)c2o1,7.66
+O=C1Cc2c(ccc3c2OCC(CNCC2CCc4[nH]c5ccc(F)cc5c4C2)O3)N1,9.0
+O=c1[nH]c2cccc(OCC3CCN(CCC4CCc5[nH]c6ccc(F)cc6c5C4)CC3)c2o1,8.0
+O=C1Cc2c(ccc3c2OCC(CNCCC2CCc4[nH]c5ccc(F)cc5c4C2)O3)N1,7.68
+O=C1Cc2c(cccc2N2CCN(CC3CCc4[nH]c5ccc(F)cc5c4C3)CC2)N1,5.94
+O=C1Cc2c(cccc2N2CCN(CCC3CCc4[nH]c5ccc(F)cc5c4C3)CC2)N1,5.33
+O=c1[nH]c2cccc(OC3CCN(CCC4CCc5[nH]c6ccc(F)cc6c5C4)CC3)c2o1,5.92
+O=c1[nH]c2cccc(N3CC4CC3CN4CC3CCc4[nH]c5ccc(F)cc5c4C3)c2o1,8.1
+O=c1[nH]c2cccc(OCC3CCN(CC4CCc5[nH]c6ccc(F)cc6c5C4)CC3)c2o1,9.4
+O=c1[nH]c2cccc(OC3CCN(CC4CCc5[nH]c6ccc(F)cc6c5C4)CC3)c2o1,8.52
+O=c1[nH]c2cccc(N3CCN(CC4CCc5c([nH]c6ccc(F)cc56)C4)CC3)c2o1,7.21
+O=C1Cc2c(ccc3c2OCC(CNCCCC2CCc4c([nH]c5ccc(F)cc45)C2)O3)N1,8.4
+O=c1[nH]c2cccc(N3CCN(CCCC4CCc5c([nH]c6ccc(F)cc56)C4)CC3)c2o1,7.21

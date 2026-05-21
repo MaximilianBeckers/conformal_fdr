@@ -1,0 +1,4 @@
+smiles,pchembl_value
+CNCC1OCc2ccccc2C1Oc1ccc(O)cc1C,tensor([7.4600])
+CCc1ccccc1OC1c2ccccc2OCC1CNC,tensor([5.3400])
+CNCC1OCc2ccccc2C1Oc1cccc(C)c1C,tensor([6.5200])

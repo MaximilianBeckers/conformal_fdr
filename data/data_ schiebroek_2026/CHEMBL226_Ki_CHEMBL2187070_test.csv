@@ -1,0 +1,10 @@
+smiles,pchembl_value
+CCCN1C(=O)N2CCN=C2c2[nH]c(-c3ccc(Br)cc3)nc21,tensor([5.7500])
+O=C(Cc1ccccc1)Nc1nc2ccc(Cl)cc2c2nc(-c3ccco3)nn12,tensor([6.6400])
+CNc1nc(C#N)nc2c1ncn2C1OC(CO)C(O)C1O,tensor([7.1600])
+Cc1ccc(-c2nc(NC(=O)Nc3ccc(F)cc3)c3nnn(Cc4ccccc4F)c3n2)cc1,tensor([6.3700])
+OCC1OC(n2cnc3c(NC4CC4c4cccc(C(F)(F)F)c4)ncnc32)C(O)C1O,tensor([6.9800])
+CCC1CN2C(=O)N(C)c3nc(-c4ccccc4)[nH]c3C2=N1,tensor([5.7900])
+CNC(=O)C1(n2cnc3c(NCc4cccc(I)c4)nc(Cl)nc32)SCC(O)C1O,tensor([6.9600])
+OCC1OC(n2cnc3c(NCc4cccc(I)c4)nc(Cl)nc32)C(O)C1F,tensor([5.3300])
+OCC1OC(n2cnc3c(NCC4c5ccccc5-c5ccccc54)ncnc32)C(O)C1O,tensor([7.8500])
