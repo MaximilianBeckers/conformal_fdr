@@ -7,30 +7,21 @@ from rdkit.Chem import rdFingerprintGenerator, Descriptors
 import numpy as np
 from rdkit.Chem.Scaffolds import MurckoScaffold
 from rdkit.ML.Cluster import Butina
-
-#calulate morgan 2 fingerprints for all compounds
-def calculate_fingerprints(smiles_list, num_bits=2048, radius=2):
-    mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=radius,fpSize=num_bits)
-    fp_array = []
-    for tmp_smi in smiles_list:
-        mol = Chem.MolFromSmiles(tmp_smi)
-        fp = mfpgen.GetFingerprintAsNumPy(mol)
-        fp_array.append(fp)
-    fp_array = np.array(fp_array)
+from numba import njit, prange
     
-    return fp_array
 
+#------------------------------------------------
 def get_rdkit_descriptors(smiles_list):
 
     desc_list = []
     for tmp_smi in smiles_list:
         res = []
         mol = Chem.MolFromSmiles(tmp_smi)
-        for nm,fn in Descriptors._descList:
+        for _, fn in Descriptors._descList:
             # some of the descriptor fucntions can throw errors if they fail, catch those here:
             try:
                 val = fn(mol)
-            except:
+            except Exception:
                 # print the error message:
                 val = np.nan
             res.append(val)
@@ -39,7 +30,91 @@ def get_rdkit_descriptors(smiles_list):
     desc_array = np.array(desc_list)
     return desc_array
 
+#***********************************
+#***** FINGERPRINT FUNCTIONS *******
+#***********************************
 
+#------------------------------------------------
+def calculate_fingerprints(smiles_list, num_bits=2048, radius=2):
+    mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=radius, fpSize=num_bits)
+    fp_array = []
+    for tmp_smi in smiles_list:
+        mol = Chem.MolFromSmiles(tmp_smi)
+        fp = mfpgen.GetFingerprintAsNumPy(mol)
+        fp_array.append(fp)
+    fp_array = np.array(fp_array)
+    return fp_array
+
+
+#---------------------------------------------------------------
+#numba implementation of Tanimoto distance
+@njit(nopython=True)
+def tanimoto_distance(v1, v2):
+    #Calculates tanimoto distance for two bit vectors
+    bit_sum = v1 + v2
+    bitwise_and = count_loop_equals2(bit_sum)
+    bitwise_or = count_loop_bigger0(bit_sum)
+    
+    jaccard_distance = 1 - (bitwise_and / bitwise_or)
+    
+    return jaccard_distance
+
+
+#--------------------------------------------------------------
+@njit()
+def count_loop_equals2(a):
+    s = 0
+    for i in a:
+        if i == 2:
+            s += 1
+    return s
+
+#--------------------------------------------------------------
+@njit()
+def count_loop_bigger0(a):
+    s = 0
+    for i in a:
+        if i > 0:
+            s += 1
+    return s
+
+
+#----------------------------------------------------------------
+@njit(nopython=True, parallel=True)
+def get_dists_between_two_sets(fp_array_1, fp_array_2):
+    
+    num_fp_1 = fp_array_1.shape[0]
+    num_fp_2 = fp_array_2.shape[0]
+    
+    dists = np.zeros((num_fp_1)*(num_fp_2))
+    
+    #calculate distances
+    for fp_ind_1 in prange(num_fp_1):
+        
+        tmp_fp_1 = fp_array_1[fp_ind_1, :]
+        
+        for fp_ind_2 in prange(num_fp_2):
+            
+            tmp_fp_2 = fp_array_2[fp_ind_2, :]
+            
+            #Calculates tanimoto distance for two bit vectors
+            bit_sum = tmp_fp_1 + tmp_fp_2
+              
+            bitwise_and = count_loop_equals2(bit_sum)
+            bitwise_or = count_loop_bigger0(bit_sum)
+    
+            tmp_dist = np.float32(1 - (bitwise_and / float(bitwise_or)))
+        
+            dists[fp_ind_1*(num_fp_2) + fp_ind_2] = 1-tmp_dist
+                 
+    return dists
+
+
+#*****************************************************
+#**************** SPLIT FUNCTIONS ********************
+#*****************************************************
+
+#---------------------------------------------------------------
 # Balanced scaffold splitting
 def balanced_scaffold_split(smiles, frac_train=0.8, frac_val=0.1, seed=42):
     random.seed(seed)
@@ -52,7 +127,7 @@ def balanced_scaffold_split(smiles, frac_train=0.8, frac_val=0.1, seed=42):
     print(f"Number of unique scaffolds: {len(groups)}")
     random.shuffle(groups)
     n = len(smiles)
-    train_target, val_target, test_target = int(frac_train*n), int(frac_val*n), n - int(frac_train*n) - int(frac_val*n)
+    _, val_target, test_target = int(frac_train*n), int(frac_val*n), n - int(frac_train*n) - int(frac_val*n)
     train, val, test = [], [], []
     for g in groups:
         if len(test + g) < test_target:
@@ -63,6 +138,7 @@ def balanced_scaffold_split(smiles, frac_train=0.8, frac_val=0.1, seed=42):
             train += g
     return train, val, test
 
+#---------------------------------------------------------------
 # Cluster-based butina splitting
 def cluster_based_split(smiles, frac_train=0.8, frac_val=0.1, random_seed=42, distance_threshold=0.3):
 
