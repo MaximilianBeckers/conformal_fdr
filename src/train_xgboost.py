@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.11.2
 #   kernelspec:
-#     display_name: conformal_prediction (3.11.14)
+#     display_name: conformal_fdr (3.12.8)
 #     language: python
 #     name: python3
 # ---
