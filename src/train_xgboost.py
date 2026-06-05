@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     cell_metadata_filter: -all
-#     custom_cell_magics: kql
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.11.2
-#   kernelspec:
-#     display_name: conformal_fdr (3.12.8)
-#     language: python
-#     name: python3
-# ---
-
 # %%
 import numpy as np
 import pandas as pd
@@ -24,10 +8,10 @@ import xgboost as xgb
 import optuna
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import average_precision_score
 
+import utils
 
 # %%
 df = pd.read_csv("../data/expansion_data_prep_with_splits_KSOL.csv")
@@ -81,10 +65,10 @@ sns.swarmplot(x=y_val, y=y_pred_prob)
 sns.boxplot(x=y_val, y=y_pred_prob, color="lightgray", showfliers=False)
 
 # get auprc and auroc
-auroc_test = roc_auc_score(y_test, y_test_pred_prob)
-print(f"Test AUROC: {auroc_test:.4f}")
-auprc_test = average_precision_score(y_test, y_test_pred_prob)
-print(f"Test AUPRC: {auprc_test:.4f}")
+auroc_val = roc_auc_score(y_val, y_pred_prob)
+print(f"Validation AUROC: {auroc_val:.4f}")
+auprc_val = average_precision_score(y_val, y_pred_prob)
+print(f"Validation AUPRC: {auprc_val:.4f}")
 
 # %% [markdown]
 # Now get the predictions for the test set
@@ -112,27 +96,43 @@ print(f"Test AUPRC: {auprc_test:.4f}")
 # %%
 from entropy_balancing_conformal_predictor import EntropyBalancingConformalPredictor
 
-X_calib = df[df[split_col] == "val"][fp_cols].values
-X_target = df[df[split_col] == "test"][fp_cols].values
+X_calib = df[df[split_col] == "val"][fp_cols].to_numpy()
+X_target = df[df[split_col] == "test"][fp_cols].to_numpy()
 
-y_calib = df[df[split_col] == "val"][target_col].values
-y_target = df[df[split_col] == "test"][target_col].values
+y_calib = df[df[split_col] == "val"][target_col].to_numpy()
+y_target = df[df[split_col] == "test"][target_col].to_numpy()
 
-f_target = y_test_pred_prob
 
 #now only subset in the null distribution
 X_calib = X_calib[y_calib == 0]
+
+# now get the fingerprints
+nn_distances_calib = utils.get_nearest_neighbor_distances(X_calib, X_target, nns=1)
+nn_distances_target = utils.get_nearest_neighbor_distances(X_target, X_target, nns=1)
+
+print(nn_distances_calib.shape[0], nn_distances_target.shape[0])
+
+ebc = EntropyBalancingConformalPredictor(nn_distances_calib, nn_distances_target, max_order=1, lambda_reg=5, use_weighted_ks=True)
+ebc.fit()
+
+f_target = y_test_pred_prob
 f_calib = y_pred_prob[y_calib == 0]
 
-ebc = EntropyBalancingConformalPredictor(X_calib, X_target, max_order=1, solver="SCS", lambda_reg=1)
-ebc.fit()
 p_values = ebc.predict_pvalues(f_calib, f_target)
 p_adjusted = ebc.p_adjust(p_values, method="BH")
-
 
 #now unweighted conformal predictor
 p_values_unweighted = ebc.predict_pvalues(f_calib, f_target, weighted=False)
 p_adjusted_unweighted = ebc.p_adjust(p_values_unweighted, method="BH")
+
+# %%
+sns.histplot(nn_distances_calib)
+sns.histplot(nn_distances_target)
+
+# %%
+print(np.sum(ebc.weights_))
+print(np.min(ebc.weights_))
+print(np.max(ebc.weights_))
 
 # %%
 true_fdr = []
@@ -162,3 +162,11 @@ plt.title("FDR Control with Entropy Balancing Conformal Predictor")
 plt.grid()
 plt.legend()
 plt.show()
+
+# %%
+
+
+# %%
+
+
+

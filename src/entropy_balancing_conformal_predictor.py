@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import cvxpy as cp
+from scipy.optimize import minimize, LinearConstraint, Bounds
 
 
 class EntropyBalancingConformalPredictor:
@@ -23,8 +23,6 @@ class EntropyBalancingConformalPredictor:
     max_order : int, default=1
         Moment order for balancing constraints.
         1 → match feature means only (recommended for binary fingerprints).
-    solver : str, default='SCS'
-        CVXPY solver to use.
     lambda_reg : float, default=0.0
         Regularisation strength for soft moment matching. When > 0, the hard
         moment constraints are dropped and replaced with a penalty term:
@@ -37,12 +35,12 @@ class EntropyBalancingConformalPredictor:
 
     VALID_ADJUST_METHODS = ("BH", "BY", "Holm", "Hochberg")
 
-    def __init__(self, X_control, X_target, max_order=1, solver="SCS", lambda_reg=0.0):
+    def __init__(self, X_control, X_target, max_order=1, lambda_reg=1.0, use_weighted_ks=True):
         self.X_control = np.asarray(X_control, dtype=np.float64)
         self.X_target = np.asarray(X_target, dtype=np.float64)
         self.max_order = max_order  # number of moments to balance (1 = means only)
-        self.solver = solver        # solver for convex optimization (e.g. 'SCS', 'ECOS')
         self.lambda_reg = lambda_reg  # soft penalty strength for moment matching
+        self.use_weighted_ks = use_weighted_ks  # whether to use weighted Kolmogorov-Smirnov test
 
         self.weights_ = None          # set after fit()
         self._is_fitted = False
@@ -57,6 +55,7 @@ class EntropyBalancingConformalPredictor:
         for k in range(2, max_order + 1):
             feats.append(X ** k)
         return np.concatenate(feats, axis=1)
+    
 
     # ------------------------------------------------------------------
     # Public API
@@ -70,37 +69,62 @@ class EntropyBalancingConformalPredictor:
         -------
         self
         """
-        Phi_c = self._build_features(self.X_control, self.max_order)
-        Phi_t = self._build_features(self.X_target, self.max_order)
-        target_moments = Phi_t.mean(axis=0)
+
+        if not self.use_weighted_ks:
+            Phi_c = self._build_features(self.X_control, self.max_order)
+            Phi_t = self._build_features(self.X_target, self.max_order)
+            target_moments = Phi_t.mean(axis=0)
 
         n = self.X_control.shape[0]
-        w = cp.Variable(n)
 
-        constraints = [w >= 0, cp.sum(w) == 1]
+        # Objective: maximize entropy - lambda * penalty
+        # We minimize the negative of this
+        def objective(w):
+            entropy = -np.sum(w * np.log(w + 1e-10))
+            
+            if self.use_weighted_ks:
+                # Weighted KS distance penalty
+                penalty = self._weighted_ks_distance(
+                    self.X_control, self.X_target, weights_1=w
+                )
+            else:
+                # Moment matching penalty
+                residual = Phi_c.T @ w - target_moments
+                penalty = np.sum(residual ** 2)
+            
+            return -(entropy - self.lambda_reg * penalty)
 
-        if self.lambda_reg > 0.0:
-            # Soft matching: entropy objective minus squared moment deviation penalty.
-            # Always feasible regardless of dimensionality.
-            residual = Phi_c.T @ w - target_moments
-            objective = cp.Maximize(
-                cp.sum(cp.entr(w)) - self.lambda_reg * cp.sum_squares(residual)
-            )
-        else:
-            # Exact matching: hard equality constraints.
-            constraints.append(Phi_c.T @ w == target_moments)
-            objective = cp.Maximize(cp.sum(cp.entr(w)))
+        # Constraints: w >= 0 and sum(w) == 1
+        bounds = Bounds(np.zeros(n), np.full(n, np.inf))
+        linear_constraint = LinearConstraint(
+            np.ones((1, n)),
+            lb=[1.0],
+            ub=[1.0]
+        )
 
-        problem = cp.Problem(objective, constraints)
-        problem.solve(solver=getattr(cp, self.solver))
+        # Initial guess: uniform weights
+        w0 = np.ones(n) / n
 
-        if w.value is None:
+        print("Starting entropy balancing optimization...")
+        print(f"Sum of initial weights: {w0.sum()}, min: {w0.min()}, max: {w0.max()}")
+
+        # Solve
+        result = minimize(
+            objective,
+            w0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=linear_constraint,
+            options={'ftol': 1e-9, 'maxiter': 10000}
+        )
+
+        if not result.success:
             raise RuntimeError(
-                "Entropy balancing optimisation failed. "
-                "The moment constraints may be infeasible for this control/target pair."
+                f"Entropy balancing optimisation failed: "
+                f"{result.message}"
             )
 
-        self.weights_ = w.value
+        self.weights_ = result.x
         self._is_fitted = True
         return self
 
@@ -204,6 +228,68 @@ class EntropyBalancingConformalPredictor:
 
         # Restore original order
         return adjusted[np.argsort(sort_idx)]
+    
+    @staticmethod
+    def _weighted_ks_distance(sample_1, sample_2, weights_1=None,
+                              weights_2=None):
+        """
+        Get weighted Kolmogorov-Smirnov distance.
+
+        Parameters
+        ----------
+        sample_1 : np.ndarray of shape (n1,)
+        sample_2 : np.ndarray of shape (n2,)
+        weights_1 : np.ndarray of shape (n1,), optional
+            Weights for samples in sample_1. If None, uniform weights.
+        weights_2 : np.ndarray of shape (n2,), optional
+            Weights for samples in sample_2. If None, uniform weights.
+
+        Returns
+        -------
+        float
+            Weighted KS distance between the two distributions.
+        """
+        # Convert to numpy if needed
+        sample_1 = np.asarray(sample_1)
+        sample_2 = np.asarray(sample_2)
+
+        # Pre-compute sorted indices
+        idx1 = np.argsort(sample_1)
+        idx2 = np.argsort(sample_2)
+
+        data1_sorted = sample_1[idx1]
+        data2_sorted = sample_2[idx2]
+
+        # Handle weights
+        if weights_1 is None:
+            weights_1 = np.ones(len(sample_1))
+        if weights_2 is None:
+            weights_2 = np.ones(len(sample_2))
+
+        # Re-order weights according to sorted indices
+        weights_1_sorted = np.asarray(weights_1)[idx1]
+        weights_2_sorted = np.asarray(weights_2)[idx2]
+
+        # Normalize weights
+        weights_1_norm = weights_1_sorted / np.sum(weights_1_sorted)
+        weights_2_norm = weights_2_sorted / np.sum(weights_2_sorted)
+
+        # Cumulative sums
+        cum_w1 = np.cumsum(weights_1_norm)
+        cum_w2 = np.cumsum(weights_2_norm)
+
+        # Compute max difference at first dataset's points
+        idx1_eval = np.searchsorted(data1_sorted, data1_sorted,
+                                    side='right')
+        idx2_eval = np.searchsorted(data2_sorted, data1_sorted,
+                                    side='right')
+
+        cdf1_vals = cum_w1[idx1_eval - 1]
+        cdf2_vals = cum_w2[np.maximum(idx2_eval - 1, 0)]
+
+        ks_dist = np.max(np.abs(cdf1_vals - cdf2_vals))
+
+        return ks_dist
 
 
 # ----------------------------------------------------------------------

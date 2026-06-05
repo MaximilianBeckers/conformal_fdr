@@ -86,7 +86,7 @@ def get_dists_between_two_sets(fp_array_1, fp_array_2):
     num_fp_1 = fp_array_1.shape[0]
     num_fp_2 = fp_array_2.shape[0]
     
-    dist_matrix = np.zeros(num_fp_1, num_fp_2, dtype=np.float32)
+    dist_matrix = np.zeros((num_fp_1, num_fp_2), dtype=np.float32)
     
     #calculate distances
     for fp_ind_1 in prange(num_fp_1):
@@ -112,12 +112,14 @@ def get_dists_between_two_sets(fp_array_1, fp_array_2):
 
 #----------------------------------------------------------------
 #get nearest neighbors from distance matrix
-def get_nearest_neighbor_distances(fp_array_1, fp_array_2):
+def get_nearest_neighbor_distances(fp_array_1, fp_array_2, nns=5):
     
     dist_matrix = get_dists_between_two_sets(fp_array_1, fp_array_2)
     
-    nearest_neighbor_dists = np.min(dist_matrix, axis=1)
-    
+    #set distances of 0 to 1 to avoid issues with zero distances
+    dist_matrix[dist_matrix == 0] = 1.0
+    nearest_neighbor_dists = np.sort(dist_matrix, axis=1)[:, :nns]
+    nearest_neighbor_dists = np.mean(nearest_neighbor_dists, axis=1)
     return nearest_neighbor_dists
 
 
