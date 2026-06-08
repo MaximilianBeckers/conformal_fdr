@@ -27,8 +27,11 @@ import utils
 
 # %%
 #read the data
+
+target_col = "HLM CLint"
 input_file = "../data/expansion_data_train.csv"
-output_file = "../data/expansion_data_prep_with_splits_KSOL.csv"
+
+output_file = "../data/expansion_data_prep_with_splits_" + target_col + ".csv"
 
 df = pd.read_csv(input_file)
 df.head()
@@ -36,7 +39,6 @@ df.head()
 num_bits = 2048
 radius_fp = 2
 feature_cols = [f"FP_{i}" for i in range(num_bits)] + [nm for nm,fn in Descriptors._descList]
-target_col = "KSOL"
 
 num_clusters = 10
 

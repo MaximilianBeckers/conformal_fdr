@@ -97,7 +97,7 @@ class EntropyBalancingConformalPredictor:
         # Constraints: w >= 0 and sum(w) == 1
         bounds = Bounds(np.zeros(n), np.full(n, np.inf))
         linear_constraint = LinearConstraint(
-            np.ones((1, n)),
+            np.ones((1, n))/n,
             lb=[1.0],
             ub=[1.0]
         )
@@ -124,9 +124,33 @@ class EntropyBalancingConformalPredictor:
                 f"{result.message}"
             )
 
-        self.weights_ = result.x
-        self._is_fitted = True
+        self.weights = result.x
+        self.is_fitted = True
+        self.final_ks_distance = self._weighted_ks_distance(
+            self.X_control, self.X_target, weights_1=self.weights
+        )
+        self.initial_ks_distance = self._weighted_ks_distance(
+            self.X_control, self.X_target, weights_1=w0
+        )
+        self.effective_sample_size = 1.0 / np.sum(self.weights ** 2)
         return self
+    
+    def get_nonconformity_scores(self, scores, labels, threshold):
+        
+        M = 100
+
+        # V(x,y) = M1{y > c}+ c1{y ≤c}−f(x)
+        V = []
+        for i in range(len(scores)):
+            if labels[i] > threshold:
+                V.append(M)
+            else:
+                V.append(threshold)
+
+            V[i] = V[i] - scores[i]
+        nonconformity_scores = np.array(V)
+        
+        return nonconformity_scores
 
     def predict_pvalues(self, calibration_scores, observed_scores, weighted=True):
         """
@@ -150,25 +174,23 @@ class EntropyBalancingConformalPredictor:
         -------
         np.ndarray of shape (n_observed,)
         """
-        if weighted and not self._is_fitted:
+        if weighted and not self.is_fitted:
             raise RuntimeError("Call fit() before predict_pvalues() with weighted=True.")
 
         cal = np.asarray(calibration_scores)
         obs = np.asarray(observed_scores)
 
         if weighted:
-            weights = self.weights_
+            weights = self.weights
             if cal.shape[0] != weights.shape[0]:
                 raise ValueError(
                     f"calibration_scores length ({cal.shape[0]}) must match "
                     f"number of control samples ({weights.shape[0]})."
                 )
         else:
-            weights = np.full(cal.shape[0], 1.0 / cal.shape[0])
+            weights = np.full(cal.shape[0], 1.0)
 
-        p_values = np.array([
-            np.sum(weights[cal > s]) for s in obs
-        ])
+        p_values = np.array([(np.sum(weights[cal > s]) + (1.0))/(np.sum(weights) + 1.0) for s in obs])
         return p_values
 
     @staticmethod
@@ -290,43 +312,3 @@ class EntropyBalancingConformalPredictor:
         ks_dist = np.max(np.abs(cdf1_vals - cdf2_vals))
 
         return ks_dist
-
-
-# ----------------------------------------------------------------------
-# Example usage
-# ----------------------------------------------------------------------
-if __name__ == "__main__":
-
-    # Create synthetic binary fingerprint data for control and target sets.
-    # NOTE: exact moment matching (tol=0) becomes infeasible for high-dimensional
-    # binary fingerprints. Use tol > 0 for approximate balancing in that regime.
-    np.random.seed(42)
-    n_control = 1000
-    n_target = 200
-    n_features = 512
-
-    X_control = np.random.randint(0, 2, size=(n_control, n_features)).astype(np.float32)
-    X_target = np.random.randint(0, 2, size=(n_target, n_features)).astype(np.float32)
-
-    predictor = EntropyBalancingConformalPredictor(
-        X_control, X_target, max_order=1, solver="SCS", lambda_reg=1.0
-    )
-    predictor.fit()
-
-    print("Weights:", predictor.weights_)
-    print("Sum:    ", predictor.weights_.sum())
-
-    print("\nTarget bit frequencies (first 10):")
-    print(X_target.mean(axis=0)[:10])
-    print("\nWeighted control bit frequencies (first 10):")
-    print((predictor.weights_[:, None] * X_control).sum(axis=0)[:10])
-
-    # Use mean bit value per molecule as a simple scalar nonconformity score
-    calib_scores = X_control.mean(axis=1)
-    obs_scores = X_target.mean(axis=1)
-
-    p_values = predictor.predict_pvalues(calib_scores, obs_scores)
-    print("\nP-values:", p_values)
-
-    adjusted = predictor.p_adjust(p_values, method="BH")
-    print("Adjusted p-values (BH):", adjusted)
