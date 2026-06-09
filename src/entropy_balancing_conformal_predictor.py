@@ -137,8 +137,11 @@ class EntropyBalancingConformalPredictor:
     
     def get_nonconformity_scores(self, scores, labels, threshold):
         
-        M = 100
+        M = 1000
+        V = M*labels - scores
+        nonconformity_scores = np.array(V)
 
+        """
         # V(x,y) = M1{y > c}+ c1{y ≤c}−f(x)
         V = []
         for i in range(len(scores)):
@@ -149,10 +152,11 @@ class EntropyBalancingConformalPredictor:
 
             V[i] = V[i] - scores[i]
         nonconformity_scores = np.array(V)
+        """
         
         return nonconformity_scores
 
-    def predict_pvalues(self, calibration_scores, observed_scores, weighted=True):
+    def predict_pvalues(self, calibration_scores, observed_scores, nonconformities=False, weighted=True):
         """
         Compute conformal p-values.
 
@@ -190,7 +194,11 @@ class EntropyBalancingConformalPredictor:
         else:
             weights = np.full(cal.shape[0], 1.0)
 
-        p_values = np.array([(np.sum(weights[cal > s]) + (1.0))/(np.sum(weights) + 1.0) for s in obs])
+        if not nonconformities:
+            p_values = np.array([(np.sum(weights[cal > s]) + (1.0))/(np.sum(weights) + 1.0) for s in obs])
+        else:
+            p_values = np.array([(np.sum(weights[cal <= s]) + (1.0))/(np.sum(weights) + 1.0) for s in obs])
+        
         return p_values
 
     @staticmethod

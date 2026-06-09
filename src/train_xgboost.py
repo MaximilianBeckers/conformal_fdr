@@ -14,15 +14,27 @@ from sklearn.metrics import average_precision_score
 import utils
 
 # %%
-df = pd.read_csv("../data/expansion_data_prep_with_splits_KSOL.csv")
+target_col = "KSOL"
 
-split_col = "umap_cluster_split" # scaffold_split	cluster_split	random_split	umap_cluster_split
+df = pd.read_csv("../data/expansion_data_prep_with_splits_" + target_col + ".csv")
+df[target_col] = -1 * np.log(df[target_col])
+
+sns.histplot(df[target_col], bins=50)
+
+split_col = "scaffold_split" # scaffold_split	cluster_split	random_split	umap_cluster_split
 
 #set target column and binarize it
-target_col = "KSOL"
-threshold = 200
+percentile = 80
+threshold = np.percentile(df[target_col], percentile)
 df[target_col + "_binary"] = (df[target_col] >= threshold).astype(int)
 target_col = target_col + "_binary"
+
+#remove nans and infs
+df = df.dropna(subset=[target_col])
+df = df[np.isfinite(df[target_col])]
+
+print(f"Threshold for top {percentile}%: {threshold:.2f}")
+print(f"Class distribution:\n{df[target_col].value_counts()}")
 
 num_bits = 2048
 descriptor_cols = [nm for nm,fn in Descriptors._descList]
@@ -36,10 +48,10 @@ y_train = df[df[split_col] == "train"][target_col]
 
 dtrain = xgb.DMatrix(X_train, label=y_train)
 
-#train
+#train a model
 params = {
-    "objective": "binary:logistic",
-    "eval_metric": "logloss",
+    "objective":"binary:logistic",
+    #"objective":"reg:squarederror",
     "max_depth": 6,
     "eta": 0.1,
     "subsample": 0.8,
@@ -77,6 +89,7 @@ print(f"Validation AUPRC: {auprc_val:.4f}")
 # now predict the probabilities for the test set
 X_test = df[df[split_col] == "test"][feature_cols]
 y_test = df[df[split_col] == "test"][target_col]
+print(f"Test set class distribution:\n{y_test.value_counts()}")
 
 dtest = xgb.DMatrix(X_test, label=y_test)
 y_test_pred_prob = model.predict(dtest)
@@ -103,36 +116,58 @@ y_calib = df[df[split_col] == "val"][target_col].to_numpy()
 y_target = df[df[split_col] == "test"][target_col].to_numpy()
 
 
-#now only subset in the null distribution
-X_calib = X_calib[y_calib == 0]
-
 # now get the fingerprints
-nn_distances_calib = utils.get_nearest_neighbor_distances(X_calib, X_target, nns=1)
+nn_distances_calib = utils.get_nearest_neighbor_distances(X_calib[y_calib == 0], X_target, nns=1)
 nn_distances_target = utils.get_nearest_neighbor_distances(X_target, X_target, nns=1)
 
 print(nn_distances_calib.shape[0], nn_distances_target.shape[0])
 
-ebc = EntropyBalancingConformalPredictor(nn_distances_calib, nn_distances_target, max_order=1, lambda_reg=5, use_weighted_ks=True)
+ebc = EntropyBalancingConformalPredictor(nn_distances_calib, nn_distances_target, max_order=1, lambda_reg=1000.0, use_weighted_ks=True)
 ebc.fit()
 
-f_target = y_test_pred_prob
-f_calib = y_pred_prob[y_calib == 0]
+p_values = ebc.predict_pvalues(y_pred_prob[y_calib == 0], y_test_pred_prob)
+p_values_unweighted = ebc.predict_pvalues(y_pred_prob[y_calib == 0], y_test_pred_prob, weighted=False)
 
-p_values = ebc.predict_pvalues(f_calib, f_target)
 p_adjusted = ebc.p_adjust(p_values, method="BH")
-
-#now unweighted conformal predictor
-p_values_unweighted = ebc.predict_pvalues(f_calib, f_target, weighted=False)
 p_adjusted_unweighted = ebc.p_adjust(p_values_unweighted, method="BH")
 
-# %%
-sns.histplot(nn_distances_calib)
-sns.histplot(nn_distances_target)
+
+#**************************************************************
+#**************** now the nonconformity scores ****************
+#**************************************************************
+nn_distances_calib = utils.get_nearest_neighbor_distances(X_calib, X_target, nns=1)
+nn_distances_target = utils.get_nearest_neighbor_distances(X_target, X_target, nns=1)
+
+ebc = EntropyBalancingConformalPredictor(nn_distances_calib, nn_distances_target, max_order=1, lambda_reg=1000.0, use_weighted_ks=True)
+ebc.fit()
+
+threshold = 0.5
+conform_scores_calib = ebc.get_nonconformity_scores(y_pred_prob, y_calib, threshold=threshold)
+conform_scores_target = ebc.get_nonconformity_scores(y_test_pred_prob, np.ones(y_test_pred_prob.shape[0])*threshold, threshold=threshold)
+
+p_values_nonconformity = ebc.predict_pvalues(conform_scores_calib, conform_scores_target, nonconformities=True, weighted=True)
+p_values_nonconformity_unweighted = ebc.predict_pvalues(conform_scores_calib, conform_scores_target, nonconformities=True, weighted=False)
+
+p_adjusted_nonconformity = ebc.p_adjust(p_values_nonconformity, method="BH")
+p_adjusted_nonconformity_unweighted = ebc.p_adjust(p_values_nonconformity_unweighted, method="BH")
 
 # %%
-print(np.sum(ebc.weights_))
-print(np.min(ebc.weights_))
-print(np.max(ebc.weights_))
+sns.ecdfplot(nn_distances_calib, label="Calibration")
+sns.ecdfplot(nn_distances_target, label="Target")
+plt.legend()
+plt.xlabel("Nearest neighbor distance")
+plt.ylabel("ECDF")
+plt.title("ECDF of nearest neighbor distances")
+plt.grid()
+plt.show()
+
+# %%
+print(np.sum(ebc.weights)/ebc.weights.shape[0])
+print(np.min(ebc.weights))
+print(np.max(ebc.weights))
+print("Initial KS distance:", ebc.initial_ks_distance)
+print("Final KS distance:", ebc.final_ks_distance)
+print("Effective number of samples:", ebc.effective_sample_size)
 
 # %%
 true_fdr = []
@@ -141,20 +176,71 @@ for tmp_fdr in np.linspace(0.01, 1, 100):
     selected = p_adjusted <= tmp_fdr
     true_positives = (y_target[selected] == 1).sum()
     false_positives = (y_target[selected] == 0).sum()
-    true_fdr.append(false_positives / max(1, selected.sum()))
+    if selected.sum() == 0:
+        true_fdr.append(0.0)
+    else:
+        true_fdr.append(false_positives / selected.sum())
     estim_fdr.append(tmp_fdr)
 
+#now unweighted
 true_fdr_unweighted = []
 estim_fdr_unweighted = []
 for tmp_fdr in np.linspace(0.01, 1, 100):
     selected = p_adjusted_unweighted <= tmp_fdr
     true_positives = (y_target[selected] == 1).sum()
     false_positives = (y_target[selected] == 0).sum()
-    true_fdr_unweighted.append(false_positives / max(1, selected.sum()))
+    if selected.sum() == 0:
+        true_fdr_unweighted.append(0.0)
+    else:
+        true_fdr_unweighted.append(false_positives / selected.sum())
     estim_fdr_unweighted.append(tmp_fdr)
 
-plt.plot(estim_fdr, true_fdr, marker="o", label="Entropy Balancing")
-plt.plot(estim_fdr_unweighted, true_fdr_unweighted, marker="o", label="Unweighted")
+#now fdr values for uncorrected p-values
+true_fdr_uncorrected = []
+estim_fdr_uncorrected = []
+for tmp_fdr in np.linspace(0.01, 1, 100):
+    selected = p_values <= tmp_fdr
+    true_positives = (y_target[selected] == 1).sum()
+    false_positives = (y_target[selected] == 0).sum()
+    if selected.sum() == 0:
+        true_fdr_uncorrected.append(0.0)
+    else:
+        true_fdr_uncorrected.append(false_positives / selected.sum())
+    estim_fdr_uncorrected.append(tmp_fdr)
+
+# now fdr values for nonconformity scores
+true_fdr_nonconformity = []
+estim_fdr_nonconformity = []
+for tmp_fdr in np.linspace(0.01, 1, 100):
+    selected = p_adjusted_nonconformity <= tmp_fdr
+    true_positives = (y_target[selected] == 1).sum()
+    false_positives = (y_target[selected] == 0).sum()
+    if selected.sum() == 0:
+        true_fdr_nonconformity.append(0.0)
+    else:
+        true_fdr_nonconformity.append(false_positives / selected.sum())
+    estim_fdr_nonconformity.append(tmp_fdr)
+
+# now fdr values for nonconformity scores unweighted
+true_fdr_nonconformity_unweighted = []
+estim_fdr_nonconformity_unweighted = []
+for tmp_fdr in np.linspace(0.01, 1, 100):
+    selected = p_adjusted_nonconformity_unweighted <= tmp_fdr
+    true_positives = (y_target[selected] == 1).sum()
+    false_positives = (y_target[selected] == 0).sum()
+    if selected.sum() == 0:
+        true_fdr_nonconformity_unweighted.append(0.0)
+    else:
+        true_fdr_nonconformity_unweighted.append(false_positives / selected.sum())
+    estim_fdr_nonconformity_unweighted.append(tmp_fdr)
+
+
+
+plt.plot(estim_fdr, true_fdr, marker="o", label="FDR-corrected with Entropy Balancing")
+plt.plot(estim_fdr_unweighted, true_fdr_unweighted, marker="o", label="FDR-corrected unweighted")
+plt.plot(estim_fdr_uncorrected, true_fdr_uncorrected, marker="o", label="Uncorrected p-values")
+plt.plot(estim_fdr_nonconformity, true_fdr_nonconformity, marker="o", label="Nonconformity Scores")
+plt.plot(estim_fdr_nonconformity_unweighted, true_fdr_nonconformity_unweighted, marker="o", label="Nonconformity Scores Unweighted")
 plt.plot([0, 1], [0, 1], linestyle="--", color="red")
 plt.xlabel("Estimated FDR")
 plt.ylabel("True FDR")
@@ -162,6 +248,9 @@ plt.title("FDR Control with Entropy Balancing Conformal Predictor")
 plt.grid()
 plt.legend()
 plt.show()
+
+# %%
+
 
 # %%
 
