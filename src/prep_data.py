@@ -28,7 +28,7 @@ import utils
 # %%
 #read the data
 
-target_col = "HLM CLint"
+target_col = "Caco-2 Permeability Papp A>B"
 input_file = "../data/expansion_data_train.csv"
 
 output_file = "../data/expansion_data_prep_with_splits_" + target_col + ".csv"
@@ -72,21 +72,21 @@ df["Cluster"] = cluster_umap_embeddings(df[["UMAP_1", "UMAP_2"]].values, n_clust
 #now set up data splits
 
 #scaffold split
-train_idx_scaffold, val_idx_scaffold, test_idx_scaffold = utils.balanced_scaffold_split(df["SMILES"].tolist(), frac_train=0.8, frac_val=0.1, seed=42)
+train_idx_scaffold, val_idx_scaffold, test_idx_scaffold = utils.balanced_scaffold_split(df["SMILES"].tolist(), frac_train=0.5, frac_val=0.25, seed=42)
 print(f"Scaffold split: Train: {len(train_idx_scaffold)}, Val: {len(val_idx_scaffold)}, Test: {len(test_idx_scaffold)}")
 df["scaffold_split"] = "test"
 df.loc[train_idx_scaffold, "scaffold_split"] = "train"
 df.loc[val_idx_scaffold, "scaffold_split"] = "val"
 
 #cluster-based split
-train_idx_cluster, val_idx_cluster, test_idx_cluster = utils.cluster_based_split(df["SMILES"].tolist(), frac_train=0.8, frac_val=0.1, random_seed=42, distance_threshold=0.3)
+train_idx_cluster, val_idx_cluster, test_idx_cluster = utils.cluster_based_split(df["SMILES"].tolist(), frac_train=0.5, frac_val=0.25, random_seed=42, distance_threshold=0.3)
 print(f"Cluster-based split: Train: {len(train_idx_cluster)}, Val: {len(val_idx_cluster)}, Test: {len(test_idx_cluster)}")
 df["cluster_split"] = "test"
 df.loc[train_idx_cluster, "cluster_split"] = "train"
 df.loc[val_idx_cluster, "cluster_split"] = "val"
 
 #random split
-train_idx_random, val_idx_random, test_idx_random = np.split(np.random.permutation(np.arange(len(df))), [int(0.8*len(df)), int(0.9*len(df))])
+train_idx_random, val_idx_random, test_idx_random = np.split(np.random.permutation(np.arange(len(df))), [int(0.5*len(df)), int(0.75*len(df))])
 print(f"Random split: Train: {len(train_idx_random)}, Val: {len(val_idx_random)}, Test: {len(test_idx_random)}")
 df["random_split"] = "test"
 df.loc[train_idx_random, "random_split"] = "train"

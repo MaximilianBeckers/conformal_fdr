@@ -3,12 +3,24 @@ import numpy as np
 from scipy.optimize import minimize, Bounds
 
 
-class EntropyBalancingConformalPredictor:
+class KSConformalPredictor:
     """
-    Covariate-shift corrected conformal predictor using entropy balancing.
+    Covariate-shift corrected conformal predictor that directly minimises the
+    KS distance between the reweighted control and target NN-distance
+    distributions, subject to a minimum effective sample size (ESS).
 
-    Maximises weight entropy subject to a hard KS-distance constraint:
-    KS(reweighted control, target) <= ks_bound.
+    Unlike entropy balancing (which maximises weight entropy subject to a KS
+    bound), this formulation prioritises tight distribution matching and uses
+    ESS as the regularising constraint to prevent degenerate weight solutions.
+
+    Solve:  minimise  KS(weighted_control, target)
+            s.t.      mean(w) = 1   (i.e. sum(w) = n)
+                      w >= 0
+                      ESS(w) >= ess_min
+                        where ESS = (sum w)^2 / sum(w^2) = n^2 / sum(w^2)
+
+    The ESS constraint is equivalent to sum(w^2) <= n^2 / ess_min, a simple
+    quadratic inequality that SLSQP handles natively.
 
     Parameters
     ----------
@@ -16,17 +28,17 @@ class EntropyBalancingConformalPredictor:
         NN-distance vector for the calibration set.
     X_target : np.ndarray of shape (n_target,)
         NN-distance vector for the target set.
-    ks_bound : float, default=0.5
-        Upper bound on the weighted KS distance.
+    ess_min : float, default=30.0
+        Minimum effective sample size. Prevents the solution from concentrating
+        all weight on very few calibration samples.
     """
 
     VALID_ADJUST_METHODS = ("BH", "BY", "Holm", "Hochberg")
 
-    def __init__(self, X_control, X_target, ks_bound=0.5, ks_penalty=0.0):
+    def __init__(self, X_control, X_target, ess_min=30.0):
         self.X_control = np.asarray(X_control, dtype=np.float64)
         self.X_target = np.asarray(X_target, dtype=np.float64)
-        self.ks_bound = ks_bound
-        self.ks_penalty = ks_penalty
+        self.ess_min = ess_min
 
         self.weights = None
         self.is_fitted = False
@@ -37,31 +49,20 @@ class EntropyBalancingConformalPredictor:
 
     def fit(self):
         """
-        Solve:  minimise  sum(w * log(w)) + ks_penalty * KS(w)
-                s.t.      mean(w) = 1   (i.e. sum(w) = n)
-                          w >= 0
-                          KS(w) <= ks_bound
+        Minimise KS(weighted_control, target) subject to ESS >= ess_min.
 
         Returns
         -------
         self
         """
         n = self.X_control.shape[0]
-        # Start at uniform weights (feasible: sum = n, mean = 1)
         w0 = np.ones(n)
 
-        init_ks = self._weighted_ks_distance(
+        self.initial_ks_distance = self._weighted_ks_distance(
             self.X_control, self.X_target, weights_1=w0
         )
-        self.initial_ks_distance = init_ks
 
-        # Uniform weights already satisfy the KS constraint — skip optimisation
-        if init_ks <= self.ks_bound:
-            self.weights = w0
-            self.is_fitted = True
-            self.final_ks_distance = init_ks
-            self.effective_sample_size = float(n)
-            return self
+        ess_min = min(self.ess_min, float(n))
 
         bounds = Bounds(np.zeros(n), np.full(n, np.inf))
         constraints = [
@@ -70,32 +71,26 @@ class EntropyBalancingConformalPredictor:
                 'fun': lambda w: np.sum(w) / n - 1.0,
             },
             {
+                # ESS >= ess_min  <=>  sum(w^2) <= n^2 / ess_min
+                # fun(w) >= 0 form: n^2 / ess_min - sum(w^2) >= 0
                 'type': 'ineq',
-                # fun(w) >= 0  <=>  KS(w) <= ks_bound
-                'fun': lambda w: self.ks_bound - self._weighted_ks_distance(
-                    self.X_control, self.X_target, weights_1=w
-                ),
+                'fun': lambda w: n ** 2 / ess_min - np.sum(w ** 2),
             },
         ]
 
-        def objective(w):
-            entropy_term = np.sum(w * np.log(w + 1e-10))
-            ks_term = self._weighted_ks_distance(
-                self.X_control, self.X_target, weights_1=w
-            )
-            return entropy_term + self.ks_penalty * ks_term
-
         result = minimize(
-            objective,
+            lambda w: self._weighted_ks_distance(
+                self.X_control, self.X_target, weights_1=w
+            ),
             w0,
             method='SLSQP',
             bounds=bounds,
             constraints=constraints,
-            options={'ftol': 1e-9, 'maxiter': 10000}
+            options={'ftol': 1e-9, 'maxiter': 10000},
         )
 
         if not result.success:
-            print(f"Warning: entropy balancing failed ({result.message}); falling back to uniform weights.")
+            print(f"Warning: KS minimisation failed ({result.message}); falling back to uniform weights.")
             self.weights = w0
         else:
             self.weights = result.x
@@ -122,20 +117,13 @@ class EntropyBalancingConformalPredictor:
 
     def estimate_test_weights(self, nn_dist_test, k=5):
         """
-        Estimate the importance weight for each test compound via k-NN
-        interpolation from the fitted calibration weights.
-
-        A test compound whose NN-distance signature is close to calibration
-        samples that received high importance weights is itself assigned a high
-        weight — correcting for the fact that the Tibshirani (2019) formula
-        requires the test-point's own importance weight, not a fixed 1.
+        Estimate importance weights for test compounds via k-NN interpolation
+        from the fitted calibration weights.
 
         Parameters
         ----------
         nn_dist_test : array-like of shape (n_test,)
-            NN-distance vector for the test set (same feature as X_control).
         k : int
-            Number of nearest calibration neighbours to average over.
 
         Returns
         -------
@@ -145,7 +133,6 @@ class EntropyBalancingConformalPredictor:
             raise RuntimeError("Call fit() before estimate_test_weights().")
         nn_dist_test = np.asarray(nn_dist_test, dtype=np.float64)
         k_eff = min(k, len(self.X_control))
-        # (n_test, n_control) absolute-difference matrix in the 1-D NN-dist space
         diffs = np.abs(nn_dist_test[:, None] - self.X_control[None, :])
         k_nearest = np.argsort(diffs, axis=1)[:, :k_eff]
         return self.weights[k_nearest].mean(axis=1)
@@ -162,9 +149,6 @@ class EntropyBalancingConformalPredictor:
         nonconformities : bool, default=False
         weighted : bool, default=True
         w_test : array-like of shape (n_observed,) or None
-            Per-test-compound importance weights.  Use estimate_test_weights()
-            to obtain these.  If None, defaults to 1 for every test compound
-            (the original — potentially liberal — approximation).
 
         Returns
         -------
@@ -188,10 +172,7 @@ class EntropyBalancingConformalPredictor:
         else:
             weights = np.ones(cal.shape[0])
 
-        if w_test is None:
-            w_test_arr = np.ones(len(obs))
-        else:
-            w_test_arr = np.asarray(w_test, dtype=np.float64)
+        w_test_arr = np.ones(len(obs)) if w_test is None else np.asarray(w_test, dtype=np.float64)
 
         total_cal = np.sum(weights)
         if not nonconformities:
@@ -254,15 +235,13 @@ class EntropyBalancingConformalPredictor:
         else:
             raise ValueError(
                 f"Unknown method '{method}'. "
-                f"Choose from "
-                f"{EntropyBalancingConformalPredictor.VALID_ADJUST_METHODS}."
+                f"Choose from {KSConformalPredictor.VALID_ADJUST_METHODS}."
             )
 
         return adjusted[np.argsort(sort_idx)]
 
     @staticmethod
-    def _weighted_ks_distance(sample_1, sample_2, weights_1=None,
-                              weights_2=None):
+    def _weighted_ks_distance(sample_1, sample_2, weights_1=None, weights_2=None):
         """Weighted KS distance between two 1-D distributions."""
         sample_1 = np.asarray(sample_1)
         sample_2 = np.asarray(sample_2)
@@ -279,16 +258,11 @@ class EntropyBalancingConformalPredictor:
         cum_w1 = np.cumsum(w1 / w1.sum())
         cum_w2 = np.cumsum(w2 / w2.sum())
 
-        # Evaluate at all unique points from BOTH distributions so the
-        # supremum is not missed (evaluating only at sample_1 points can
-        # underestimate the KS distance).
         all_points = np.concatenate([data1_sorted, data2_sorted])
 
         i1 = np.searchsorted(data1_sorted, all_points, side='right')
         i2 = np.searchsorted(data2_sorted, all_points, side='right')
 
-        # CDF is 0 to the left of the first sample point; fix the edge case
-        # where np.maximum(-1, 0) would wrongly return cum_w[0] instead of 0.
         cdf1 = np.where(i1 > 0, cum_w1[np.minimum(i1 - 1, len(cum_w1) - 1)], 0.0)
         cdf2 = np.where(i2 > 0, cum_w2[np.minimum(i2 - 1, len(cum_w2) - 1)], 0.0)
 
