@@ -1,0 +1,7 @@
+method,n_selected,true_fdr,n_actives_selected
+kNN weighted,0,,0
+kNN unweighted,0,,0
+kNN NC weighted,0,,0
+kNN NC unweighted,0,,0
+KS weighted,0,,0
+KS NC weighted,0,,0

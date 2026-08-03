@@ -1,0 +1,102 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{benjamini1995}
+\citation{vovk2005,shafer2008}
+\citation{bates2023}
+\citation{jin2023selection}
+\citation{martin2017,schiebroek2026}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\citation{vovk2005}
+\citation{tibshirani2019}
+\citation{bates2023}
+\citation{benjamini1995}
+\citation{benjamini2001}
+\citation{holm1979,hochberg1988}
+\@writefile{toc}{\contentsline {paragraph}{Scope of this draft.}{2}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Conformal prediction and weighted exchangeability.}{2}{section*.2}\protected@file@percent }
+\citation{bates2021}
+\citation{angelopoulos2023}
+\citation{martin2017,wu2018moleculenet}
+\citation{schiebroek2026}
+\citation{bates2021}
+\@writefile{toc}{\contentsline {paragraph}{Conformal p-values, outlier testing, and FDR control.}{3}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Risk-controlling prediction and selective inference.}{3}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Distribution shift in molecular machine learning.}{3}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Methods}{3}{section.3}\protected@file@percent }
+\newlabel{sec:methods}{{3}{3}{Methods}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem formulation and the Subpopulation Prediction Distribution Test (SPDT)}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:spdt}{{3.1}{3}{Problem formulation and the Subpopulation Prediction Distribution Test (SPDT)}{subsection.3.1}{}}
+\citation{tibshirani2019}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Calibration and empirical null distribution}{4}{subsubsection.3.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.2}Conformal p-value and decision rule}{4}{subsubsection.3.1.2}\protected@file@percent }
+\newlabel{sec:pvalue}{{3.1.2}{4}{Conformal p-value and decision rule}{subsubsection.3.1.2}{}}
+\newlabel{eq:pvalue-uniform}{{1}{4}{Conformal p-value and decision rule}{equation.3.1}{}}
+\newlabel{eq:weighted-pvalue}{{3.1.2}{4}{Conformal p-value and decision rule}{equation.3.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.3}Two ways to pool calibration information}{4}{subsubsection.3.1.3}\protected@file@percent }
+\newlabel{sec:pooling}{{3.1.3}{4}{Two ways to pool calibration information}{subsubsection.3.1.3}{}}
+\citation{benjamini1995}
+\citation{benjamini2001}
+\citation{holm1979}
+\citation{hochberg1988}
+\citation{bates2023}
+\citation{bates2023}
+\citation{tibshirani2019}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.4}Multiple-hypothesis correction}{5}{subsubsection.3.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.5}Distinct relation to conformal outlier testing}{5}{subsubsection.3.1.5}\protected@file@percent }
+\newlabel{sec:spdt-vs-outlier}{{3.1.5}{5}{Distinct relation to conformal outlier testing}{subsubsection.3.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Covariate shift and importance-weighted calibration}{5}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:weighting}{{3.2}{5}{Covariate shift and importance-weighted calibration}{subsection.3.2}{}}
+\citation{schiebroek2026}
+\@writefile{toc}{\contentsline {paragraph}{(i) Entropy balancing.}{6}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{(ii) Direct KS minimisation.}{6}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{(iii) Local k-NN (Tanimoto) weighting.}{6}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Data and Experimental Setup}{6}{section.4}\protected@file@percent }
+\newlabel{sec:experiments}{{4}{6}{Data and Experimental Setup}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Splitting strategies}{6}{subsection.4.1}\protected@file@percent }
+\citation{schiebroek2026}
+\citation{schiebroek2026}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}ADMET single-endpoint benchmarks}{7}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:data-admet}{{4.2}{7}{ADMET single-endpoint benchmarks}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}100-assay ChEMBL bioactivity benchmark}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:data-schiebroek}{{4.3}{7}{100-assay ChEMBL bioactivity benchmark}{subsection.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Synthetic scaffold-swap experiment}{7}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:data-synthetic}{{4.4}{7}{Synthetic scaffold-swap experiment}{subsection.4.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Unweighted SPDT, 100 ChEMBL bioactivity assays (\texttt  {results/schiebroek\_results\_*.csv}), nominal FDR $q=0.2$. ``Assays w/ selection'' excludes assays where no compound was selected at $q=0.2$ (no FDR is defined in that case). Mean true FDR and the fraction of well-controlled assays are computed over that subset.}}{8}{table.caption.9}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:schiebroek}{{1}{8}{Unweighted SPDT, 100 ChEMBL bioactivity assays (\texttt {results/schiebroek\_results\_*.csv}), nominal FDR $q=0.2$. ``Assays w/ selection'' excludes assays where no compound was selected at $q=0.2$ (no FDR is defined in that case). Mean true FDR and the fraction of well-controlled assays are computed over that subset}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Results}{8}{section.5}\protected@file@percent }
+\newlabel{sec:results}{{5}{8}{Results}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Naive conformal FDR control degrades under structural splits}{8}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:results-schiebroek}{{5.1}{8}{Naive conformal FDR control degrades under structural splits}{subsection.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Effect of importance weighting on ADMET endpoints}{8}{subsection.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Distribution of true FDR at nominal $q=0.2$ across 100 ChEMBL bioactivity assays, unweighted SPDT, by split type. Predictive performance (mean AUROC) also degrades from random to scaffold to cluster splitting, confirming that the cluster split induces a harder generalisation problem, but the FDR-control failure is disproportionately larger than the AUROC drop would suggest.}}{9}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:schiebroek-box}{{1}{9}{Distribution of true FDR at nominal $q=0.2$ across 100 ChEMBL bioactivity assays, unweighted SPDT, by split type. Predictive performance (mean AUROC) also degrades from random to scaffold to cluster splitting, confirming that the cluster split induces a harder generalisation problem, but the FDR-control failure is disproportionately larger than the AUROC drop would suggest}{figure.caption.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces ADMET endpoints, nominal FDR $q=0.2$, score-based SPDT (\texttt  {results/*\_fdr\_metrics.csv}). ``---'' indicates zero compounds selected (true FDR undefined). All three splits use the same trained model per endpoint; only the calibration/test partition differs.}}{10}{table.caption.11}\protected@file@percent }
+\newlabel{tab:admet}{{2}{10}{ADMET endpoints, nominal FDR $q=0.2$, score-based SPDT (\texttt {results/*\_fdr\_metrics.csv}). ``---'' indicates zero compounds selected (true FDR undefined). All three splits use the same trained model per endpoint; only the calibration/test partition differs}{table.caption.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Synthetic scaffold-swap experiment}{10}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{10}{section.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces KSOL: true FDR vs.\ nominal FDR level $q$, unweighted vs.\ kNN-weighted vs.\ KS-weighted SPDT, across random, cluster, and scaffold splits. The diagonal is the target (true FDR = nominal FDR).}}{11}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:ksol-fdr}{{2}{11}{KSOL: true FDR vs.\ nominal FDR level $q$, unweighted vs.\^^MkNN-weighted vs.\ KS-weighted SPDT, across random, cluster, and scaffold splits. The diagonal is the target (true FDR = nominal FDR)}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {paragraph}{Limitations.}{11}{section*.14}\protected@file@percent }
+\bibstyle{plainnat}
+\bibcite{angelopoulos2023}{{1}{2023}{{Angelopoulos et al.}}{{}}}
+\bibcite{bates2021}{{2}{2021}{{Bates et al.}}{{}}}
+\bibcite{bates2023}{{3}{2023}{{Bates et al.}}{{}}}
+\bibcite{benjamini1995}{{4}{1995}{{Benjamini and Hochberg}}{{}}}
+\bibcite{benjamini2001}{{5}{2001}{{Benjamini and Yekutieli}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces KSOL, scaffold split: ECDF of mean 5-NN Tanimoto distance for the calibration set before/after importance weighting, and for the target (test) set, for kNN-weighting and KS-weighting. Bringing the weighted calibration curve closer to the target curve is the explicit optimisation objective of both schemes (Section~\ref {sec:weighting}).}}{12}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:ksol-ecdf}{{3}{12}{KSOL, scaffold split: ECDF of mean 5-NN Tanimoto distance for the calibration set before/after importance weighting, and for the target (test) set, for kNN-weighting and KS-weighting. Bringing the weighted calibration curve closer to the target curve is the explicit optimisation objective of both schemes (Section~\ref {sec:weighting})}{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{12}{section.7}\protected@file@percent }
+\bibcite{hochberg1988}{{6}{1988}{{Hochberg}}{{}}}
+\bibcite{holm1979}{{7}{1979}{{Holm}}{{}}}
+\bibcite{jin2023selection}{{8}{2023}{{Jin and Cand\`es}}{{}}}
+\bibcite{martin2017}{{9}{2017}{{Martin et al.}}{{}}}
+\bibcite{schiebroek2026}{{10}{2026}{{Schiebroek et al.}}{{}}}
+\bibcite{shafer2008}{{11}{2008}{{Shafer and Vovk}}{{}}}
+\bibcite{tibshirani2019}{{12}{2019}{{Tibshirani et al.}}{{}}}
+\bibcite{vovk2005}{{13}{2005}{{Vovk et al.}}{{}}}
+\bibcite{wu2018moleculenet}{{14}{2018}{{Wu et al.}}{{}}}
+\gdef \@abspage@last{13}

@@ -32,7 +32,6 @@ from rdkit.Chem import AllChem, rdFingerprintGenerator, Descriptors
 # %%
 import utils
 from conformal_predictor import ConformalPredictor
-from ks_conformal_predictor import KSConformalPredictor
 
 
 # %%
@@ -57,25 +56,24 @@ def parse_pchembl(val):
 
 
 # %%
-def compute_features(df, smiles_col="smiles", target_col = "label"):
-    """Return (full_feature_array, fp_only_array) for a list of SMILES."""
-    
-    #get feature
+def compute_features(df, smiles_col="smiles", target_col="label"):
+    """Return (full_feature_array, fp_only_array, labels) for a dataframe of SMILES."""
     fp_array = utils.calculate_fingerprints(df[smiles_col].tolist(), num_bits=NUM_BITS, radius=2)
     fp_cols = [f"FP_{i}" for i in range(fp_array.shape[1])]
-    df[fp_cols] = fp_array
 
     desc_array = utils.get_rdkit_descriptors(df[smiles_col].tolist())
-    desc_array[np.absolute(desc_array)>1e20] = np.inf
-    desc_cols = [nm for nm,fn in Descriptors._descList]
-    df[desc_cols] = desc_array
-    
-    
-    feature_cols = fp_cols + desc_cols
-    df[feature_cols + [target_col]] = df[feature_cols + [target_col]].replace([np.inf, -np.inf], np.nan)
-    df = df.dropna(subset=feature_cols + [target_col]).reset_index(drop=True)
+    desc_array[np.absolute(desc_array) > 1e20] = np.inf
+    desc_cols = [nm for nm, fn in Descriptors._descList]
 
-    return df[feature_cols].to_numpy(), df[fp_cols].to_numpy(), df[target_col].to_numpy()
+    feature_cols = fp_cols + desc_cols
+    feat_df = pd.concat(
+        [pd.DataFrame(fp_array, columns=fp_cols, index=df.index),
+         pd.DataFrame(desc_array, columns=desc_cols, index=df.index),
+         df[[target_col]]],
+        axis=1,
+    ).replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
+
+    return feat_df[feature_cols].to_numpy(), feat_df[fp_cols].to_numpy(), feat_df[target_col].to_numpy()
 
 
 # %%
@@ -143,22 +141,7 @@ def run_conformal_fdr(model, X_calib, y_calib, X_target, y_target, fp_calib, fp_
 
     neg_mask = y_calib == 0  # label 0 = inactive / calibration negatives
 
-    # --- entropy balancing: neg-only calibration, raw model scores ---
-    ebc_w = ConformalPredictor(method="entropy_balancing", weighted=True, ks_bound=0.2, ks_penalty=0)
-    ebc_w.fit(fp_calib[neg_mask], y_pred_calib[neg_mask], fp_target=fp_target)
-    ebc_uw = ConformalPredictor(method="entropy_balancing", weighted=False)
-    ebc_uw.fit(fp_calib[neg_mask], y_pred_calib[neg_mask])
-
-    print("Initial KS distance: " + str(ebc_w.initial_ks_distance))
-    print("Final KS distance:   " + str(ebc_w.final_ks_distance))
-    print("Effective Sample Size: " + str(ebc_w.effective_sample_size))
-
-    p_values = ebc_w.predict_pvalues(fp_target, y_pred_target)
-    p_values_uw = ebc_uw.predict_pvalues(fp_target, y_pred_target)
-    p_adjusted = ebc_w.p_adjust(p_values, method="BH")
-    p_adjusted_uw = ebc_uw.p_adjust(p_values_uw, method="BH")
-
-    # --- entropy balancing: all calibration, nonconformity scores ---
+    # --- nonconformity scores (shared across all methods) ---
     nc_calib = ConformalPredictor.get_nonconformity_scores(
         y_pred_calib, y_calib, CONF_THRESHOLD, function="difference"
     )
@@ -167,20 +150,10 @@ def run_conformal_fdr(model, X_calib, y_calib, X_target, y_target, fp_calib, fp_
         CONF_THRESHOLD, function="difference"
     )
 
-    ebc2_w = ConformalPredictor(method="entropy_balancing", weighted=True, ks_bound=0.2, ks_penalty=0)
-    ebc2_w.fit(fp_calib, nc_calib, fp_target=fp_target)
-    ebc2_uw = ConformalPredictor(method="entropy_balancing", weighted=False)
-    ebc2_uw.fit(fp_calib, nc_calib)
-
-    p_nc = ebc2_w.predict_pvalues(fp_target, nc_target, nonconformities=True)
-    p_nc_uw = ebc2_uw.predict_pvalues(fp_target, nc_target, nonconformities=True)
-    p_adjusted_nc = ebc2_w.p_adjust(p_nc, method="BH")
-    p_adjusted_nc_uw = ebc2_uw.p_adjust(p_nc_uw, method="BH")
-
     # --- kNN: neg-only calibration, raw model scores ---
-    knn_w = ConformalPredictor(method="knn", num_nn=30, weighted=True)
-    knn_w.fit(fp_calib[neg_mask], y_pred_calib[neg_mask])
-    knn_uw = ConformalPredictor(method="knn", num_nn=30, weighted=False)
+    knn_w = ConformalPredictor(method="knn", num_nn=-1, weighted=True)
+    knn_w.fit(fp_calib[neg_mask], y_pred_calib[neg_mask], fp_target=fp_target, n_eff=100)
+    knn_uw = ConformalPredictor(method="knn", num_nn=-1, weighted=False)
     knn_uw.fit(fp_calib[neg_mask], y_pred_calib[neg_mask])
 
     p_knn = knn_w.predict_pvalues(fp_target, y_pred_target)
@@ -189,9 +162,9 @@ def run_conformal_fdr(model, X_calib, y_calib, X_target, y_target, fp_calib, fp_
     p_adjusted_knn_uw = knn_uw.p_adjust(p_knn_uw, method="BH")
 
     # --- kNN: all calibration, nonconformity scores ---
-    knn_nc_w = ConformalPredictor(method="knn", num_nn=30, weighted=True)
-    knn_nc_w.fit(fp_calib, nc_calib)
-    knn_nc_uw = ConformalPredictor(method="knn", num_nn=30, weighted=False)
+    knn_nc_w = ConformalPredictor(method="knn", num_nn=-1, weighted=True)
+    knn_nc_w.fit(fp_calib, nc_calib, fp_target=fp_target, n_eff=100)
+    knn_nc_uw = ConformalPredictor(method="knn", num_nn=-1, weighted=False)
     knn_nc_uw.fit(fp_calib, nc_calib)
 
     p_knn_nc = knn_nc_w.predict_pvalues(fp_target, nc_target, nonconformities=True)
@@ -199,21 +172,42 @@ def run_conformal_fdr(model, X_calib, y_calib, X_target, y_target, fp_calib, fp_
     p_adjusted_knn_nc = knn_nc_w.p_adjust(p_knn_nc, method="BH")
     p_adjusted_knn_nc_uw = knn_nc_uw.p_adjust(p_knn_nc_uw, method="BH")
 
+    # --- KS: neg-only calibration, raw model scores ---
+    ks_w = ConformalPredictor(method="ks", weighted=True)
+    ks_w.fit(fp_calib[neg_mask], y_pred_calib[neg_mask], fp_target=fp_target, n_eff=100)
+
+    p_ks = ks_w.predict_pvalues(fp_target, y_pred_target)
+    p_adjusted_ks = ks_w.p_adjust(p_ks, method="BH")
+
+    # --- KS: all calibration, nonconformity scores ---
+    ks2_w = ConformalPredictor(method="ks", weighted=True)
+    ks2_w.fit(fp_calib, nc_calib, fp_target=fp_target, n_eff=100)
+
+    p_ks_nc = ks2_w.predict_pvalues(fp_target, nc_target, nonconformities=True)
+    p_adjusted_ks_nc = ks2_w.p_adjust(p_ks_nc, method="BH")
+
+    ks_distances = {
+        "ks_neg": (ks_w.initial_ks_distance,  ks_w.final_ks_distance),
+        "ks_nc":  (ks2_w.initial_ks_distance, ks2_w.final_ks_distance),
+    }
+
     return {
         "y_target": y_target,
         "y_pred_target": y_pred_target,
-        "p_values": p_values,
-        "p_adjusted": p_adjusted,
-        "p_adjusted_uw": p_adjusted_uw,
-        "p_adjusted_nc": p_adjusted_nc,
-        "p_adjusted_nc_uw": p_adjusted_nc_uw,
         "p_adjusted_knn": p_adjusted_knn,
         "p_adjusted_knn_uw": p_adjusted_knn_uw,
         "p_adjusted_knn_nc": p_adjusted_knn_nc,
         "p_adjusted_knn_nc_uw": p_adjusted_knn_nc_uw,
-        "nn_dist_calib": ebc2_w.X_control,
-        "nn_dist_target": ebc2_w.X_target,
-        "ebc": ebc2_w,
+        "p_adjusted_ks": p_adjusted_ks,
+        "p_adjusted_ks_nc": p_adjusted_ks_nc,
+        # predictors and score arrays for ECDF diagnostics
+        "knn_w": knn_w, "knn_nc_w": knn_nc_w,
+        "ks_w": ks_w, "ks2_w": ks2_w,
+        "fp_target": fp_target,
+        "scores_calib_neg": y_pred_calib[neg_mask],
+        "nc_calib": nc_calib,
+        "nc_target": nc_target,
+        "ks_distances": ks_distances,
     }
 
 
@@ -232,18 +226,63 @@ def compute_fdr_curve(p_adjusted, y_target):
 
 
 # %%
-def plot_fdr_curves(cfdr, prefix, save_dir):
+def plot_ecdf_diagnostics(cfdr, prefix=""):
+    """ECDF of mean 5-NN distances (calib→target vs target→target) before/after weighting."""
+    fp_target = cfdr["fp_target"]
+    panels = [
+        (cfdr["knn_w"],    "kNN neg-only"),
+        (cfdr["knn_nc_w"], "kNN all-calib (NC)"),
+        (cfdr["ks_w"],     "KS neg-only"),
+        (cfdr["ks2_w"],    "KS all-calib (NC)"),
+    ]
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    for ax, (pred, label) in zip(axes.flatten(), panels):
+        X_control, X_target = pred.get_nn_distances(fp_target, nns=5)
+        w = pred.get_calibration_weights(fp_target=fp_target)
+
+        # unweighted calibration ECDF
+        sort_uw = np.argsort(X_control)
+        x_uw = X_control[sort_uw]
+        y_uw = np.arange(1, len(x_uw) + 1) / len(x_uw)
+        ax.plot(x_uw, y_uw, label="Calibration (unweighted)", color="steelblue")
+
+        # weighted calibration ECDF
+        cw = np.cumsum(w[sort_uw])
+        y_w = cw / cw[-1]
+        ax.plot(x_uw, y_w, label="Calibration (weighted)", color="darkorange")
+
+        # target ECDF
+        x_tgt = np.sort(X_target)
+        y_tgt = np.arange(1, len(x_tgt) + 1) / len(x_tgt)
+        ax.plot(x_tgt, y_tgt, label="Target", color="green", linestyle="--")
+
+        ax.set_title(label, fontsize=10)
+        ax.set_xlabel("Mean 5-NN Tanimoto distance")
+        ax.set_ylabel("ECDF")
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+
+    title = "ECDF: mean 5-NN distance — calibration before/after weighting vs target"
+    if prefix:
+        title += f" — {prefix}"
+    fig.suptitle(title, fontsize=12)
+    plt.tight_layout()
+    plt.show()
+    plt.close(fig)
+
+
+# %%
+def plot_fdr_curves(cfdr, prefix):
     y_target = cfdr["y_target"]
 
     curves = {
-        "Weighted (neg-only)": cfdr["p_adjusted"],
-        "Unweighted (neg-only)": cfdr["p_adjusted_uw"],
-        "Nonconformity weighted": cfdr["p_adjusted_nc"],
-        "Nonconformity unweighted": cfdr["p_adjusted_nc_uw"],
         "kNN weighted": cfdr["p_adjusted_knn"],
         "kNN unweighted": cfdr["p_adjusted_knn_uw"],
         "kNN NC weighted": cfdr["p_adjusted_knn_nc"],
         "kNN NC unweighted": cfdr["p_adjusted_knn_nc_uw"],
+        "KS weighted": cfdr["p_adjusted_ks"],
+        "KS NC weighted": cfdr["p_adjusted_ks_nc"],
     }
 
     fig, ax = plt.subplots(figsize=(7, 6))
@@ -260,11 +299,6 @@ def plot_fdr_curves(cfdr, prefix, save_dir):
     plt.tight_layout()
     plt.show()
 
-    out_path = os.path.join(save_dir, f"{prefix}_fdr_curve.png")
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
-    print(f"  FDR plot saved → {out_path}")
-
 
 # %%
 def fdr_metrics_at_level(p_adjusted, y_target, fdr_level=0.2):
@@ -275,6 +309,7 @@ def fdr_metrics_at_level(p_adjusted, y_target, fdr_level=0.2):
     fp = (y_target[selected] == 0).sum()
     tp = (y_target[selected] == 1).sum()
     return {"n_selected": int(n), "true_fdr": float(fp / n), "n_actives_selected": int(tp)}
+
 
 
 # %%
@@ -310,9 +345,10 @@ def process_dataset(prefix):
 
     cfdr = run_conformal_fdr(model, X_calib, y_calib, X_target, y_target, fp_calib, fp_target)
 
-    plot_fdr_curves(cfdr, prefix, RESULTS_DIR)
+    plot_fdr_curves(cfdr, prefix)
+    plot_ecdf_diagnostics(cfdr, prefix)
 
-    m = fdr_metrics_at_level(cfdr["p_adjusted"], y_target)
+    m = fdr_metrics_at_level(cfdr["p_adjusted_knn"], y_target)
     print(f"  FDR@0.2 — selected: {m['n_selected']}, true FDR: {m['true_fdr']:.4f}, actives found: {m['n_actives_selected']}")
 
     return {
@@ -324,78 +360,111 @@ def process_dataset(prefix):
         "fdr02_n_selected": m["n_selected"],
         "fdr02_true_fdr": m["true_fdr"],
         "fdr02_n_actives": m["n_actives_selected"],
+        "ks_distances": cfdr["ks_distances"],
         "conformal_results": cfdr,
     }
 
 
 # %%
-if __name__ == "__main__":
-    train_files = sorted(glob.glob(os.path.join(DATA_DIR, "CHEMBL226*_train_ach.csv")))
-    train_files = [f for f in train_files if "_df_" not in os.path.basename(f)]
-    prefixes = [os.path.basename(f).replace("_train_ach.csv", "") for f in train_files]
-    print(f"Found {len(prefixes)} datasets")
+train_files = sorted(glob.glob(os.path.join(DATA_DIR, "*_train_ach.csv")))
+train_files = [f for f in train_files if "_df_" not in os.path.basename(f)]
+prefixes = [os.path.basename(f).replace("_train_ach.csv", "") for f in train_files]
+print(f"Found {len(prefixes)} datasets")
 
-    os.makedirs(RESULTS_DIR, exist_ok=True)
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
-    all_rows = []
-    all_conformal = []
-    for prefix in prefixes[:100]:
-        row = process_dataset(prefix)
-        try:
-            all_rows.append({k: v for k, v in row.items() if k != "conformal_results"})
-            if row.get("conformal_ran") and "conformal_results" in row:
-                all_conformal.append({"prefix": prefix, **row["conformal_results"]})
-        except Exception as exc:
-            print(f"  ERROR: {exc}")
-            all_rows.append({"prefix": prefix, "error": str(exc)})
+all_rows = []
+all_conformal = []
+for prefix in prefixes[:100]:
+    row = process_dataset(prefix)
+    try:
+        all_rows.append({k: v for k, v in row.items() if k != "conformal_results"})
+        if row.get("conformal_ran") and "conformal_results" in row:
+            all_conformal.append({"prefix": prefix, **row["conformal_results"]})
+    except Exception as exc:
+        print(f"  ERROR: {exc}")
+        all_rows.append({"prefix": prefix, "error": str(exc)})
 
-    summary = pd.DataFrame(all_rows)
-    out_path = os.path.join(RESULTS_DIR, "schiebroek_results.csv")
-    summary.to_csv(out_path, index=False)
-    print(f"\nSaved summary to {out_path}")
-    print(summary.describe())
+summary = pd.DataFrame(all_rows)
+out_path = os.path.join(RESULTS_DIR, "schiebroek_results_" + SPLIT_TYPE + "_" + str(THRESHOLD) + ".csv")
+summary.to_csv(out_path, index=False)
+print(f"\nSaved summary to {out_path}")
+print(summary.describe())
 
-    conformal_path = os.path.join(RESULTS_DIR, "schiebroek_conformal_results.pkl")
-    with open(conformal_path, "wb") as f:
-        pickle.dump(all_conformal, f)
-    print(f"Saved {len(all_conformal)} conformal results → {conformal_path}")
-
-
-    # Heatmap: one separate figure per method
-    method_keys = {
-        "p_adjusted":       "Weighted (neg-only)",
-        "p_adjusted_uw":    "Unweighted (neg-only)",
-        "p_adjusted_nc":    "Nonconformity weighted",
-        "p_adjusted_nc_uw": "Nonconformity unweighted",
-        "p_adjusted_knn":      "kNN weighted",
-        "p_adjusted_knn_uw":   "kNN unweighted",
-        "p_adjusted_knn_nc":   "kNN NC weighted",
-        "p_adjusted_knn_nc_uw": "kNN NC unweighted",
-    }
-
-    if all_conformal:
-        for key, label in method_keys.items():
-            estim_all, true_all = [], []
-            for cfdr in all_conformal:
-                estim, true, _ = compute_fdr_curve(cfdr[key], cfdr["y_target"])
-                estim_all.extend(estim)
-                true_all.extend(true)
-
-            fig, ax = plt.subplots(figsize=(7, 6))
-            h = ax.hist2d(estim_all, true_all, bins=20, range=[[0, 1], [0, 1]], cmap="YlOrRd")
-            plt.colorbar(h[3], ax=ax, label="Count")
-            ax.plot([0, 1], [0, 1], linestyle="--", color="blue", label="y = x (ideal)")
-            ax.set_xlabel("Estimated FDR")
-            ax.set_ylabel("True FDR")
-            ax.set_title(f"Estimated vs True FDR — {label}")
-            ax.legend()
-            plt.tight_layout()
-            heatmap_path = os.path.join(RESULTS_DIR, f"fdr_heatmap_{key}.png")
-            fig.savefig(heatmap_path, dpi=150)
-            plt.show()
-            print(f"Heatmap saved → {heatmap_path}")
+conformal_path = os.path.join(RESULTS_DIR, "schiebroek_conformal_results_" + SPLIT_TYPE + "_" + str(THRESHOLD) + ".pkl")
+with open(conformal_path, "wb") as f:
+    pickle.dump(all_conformal, f)
+print(f"Saved {len(all_conformal)} conformal results → {conformal_path}")
 
 
 # %%
+#read all conformal results
+conformal_path = os.path.join(RESULTS_DIR, "schiebroek_conformal_results_" + SPLIT_TYPE + "_" + str(THRESHOLD) + ".pkl")
+with open(conformal_path, 'rb') as f:
+    all_conformal = pickle.load(f)
+    
+# Heatmap: one separate figure per method
+method_keys = {
+    "p_adjusted_knn":      "kNN weighted",
+    "p_adjusted_knn_uw":   "kNN unweighted",
+    "p_adjusted_knn_nc":   "kNN NC weighted",
+    "p_adjusted_knn_nc_uw": "kNN NC unweighted",
+    "p_adjusted_ks":       "KS weighted",
+    "p_adjusted_ks_nc":    "KS NC weighted",
+}
+
+for key, label in method_keys.items():
+    estim_all, true_all = [], []
+    for cfdr in all_conformal:
+        estim, true, _ = compute_fdr_curve(cfdr[key], cfdr["y_target"])
+        estim_all.extend(estim)
+        true_all.extend(true)
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+    h = ax.hist2d(estim_all, true_all, bins=20, range=[[0, 1], [0, 1]], cmap="YlOrRd")
+    plt.colorbar(h[3], ax=ax, label="Count")
+    ax.plot([0, 1], [0, 1], linestyle="--", color="blue", label="y = x (ideal)")
+    ax.set_xlabel("Estimated FDR")
+    ax.set_ylabel("True FDR")
+    ax.set_title(f"Estimated vs True FDR — {label}")
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
+
+# %%
+# KS distance summary: initial vs final across all datasets
+ks_method_keys = {
+    "ks_neg": "KS neg-only",
+    "ks_nc":  "KS all-calib (NC)",
+}
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+for ax, (key, label) in zip(axes.flatten(), ks_method_keys.items()):
+    init_vals, final_vals = [], []
+    for cfdr in all_conformal:
+        ksd = cfdr.get("ks_distances", {}).get(key)
+        if ksd is not None:
+            init_vals.append(ksd[0])
+            final_vals.append(ksd[1])
+    init_vals  = np.array(init_vals)
+    final_vals = np.array(final_vals)
+
+    ax.scatter(init_vals, final_vals, alpha=0.5, s=20, color="steelblue")
+    lim = max(init_vals.max(), final_vals.max()) * 1.05 if len(init_vals) else 1.0
+    ax.plot([0, lim], [0, lim], linestyle="--", color="red", label="no change")
+    ax.set_xlabel("Initial KS distance")
+    ax.set_ylabel("Final KS distance")
+    ax.set_title(label)
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+    delta = init_vals - final_vals
+    print(f"{label}: median reduction = {np.median(delta):.4f}  "
+          f"(init {np.median(init_vals):.4f} → final {np.median(final_vals):.4f})")
+
+fig.suptitle("KS distance before vs after weighting (one point per dataset)", fontsize=12)
+plt.tight_layout()
+plt.show()
+plt.close(fig)
 
 # %%
